@@ -1,0 +1,18 @@
+%% declarations
+a: uint32;
+b: uint32;
+t: uint32;
+maskLoClear: uint32;
+
+%% initialisation
+
+%% preconditions
+
+%% postconditions
+
+t == (a & maskLoClear);
+
+%% program
+
+t := (a >> n) << n;
+maskLoClear := ~((1 << n) - 1);

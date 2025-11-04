@@ -1,0 +1,28 @@
+%% declarations
+
+n: uint32;
+sum: uint32;
+num: uint32;
+
+%% initialisation
+
+n := 10;
+sum := 0;
+num := n;
+
+%% preconditions
+n == 10;
+
+%% postconditions
+sum == 55;
+
+%% program
+
+while (num > 0)
+    invariant (sum == (n * (n + 1) / 2) - 
+                (num * (num + 1) / 2) && num >= 0) // invariant is not optional.
+    measure num
+{
+    sum := sum + num;
+    num := num - 1;
+}

@@ -1,0 +1,35 @@
+%% declarations
+a: uint32;
+b: uint32;
+
+%% initialisation
+
+%% preconditions
+
+%% postconditions
+
+// identity relations
+
+(a & 0) == 0;
+(a | 0) == a;
+(a ^ 0) == a;
+(a & a) == a;
+(a ^ a) == 0;
+~(~a) == a;
+(a | ~a) == 4294967295; // 0xFFFFFFFF
+
+// boolean algebra
+
+(~(a & b)) == ((~a) | (~b));
+(~(a | b)) == ((~a) & (~b));
+((a & b) | (a ^ b)) == (a | b);
+((a | b) ^ (a & b)) == (a ^ b);
+((a ^ b) ^ a) == b;
+
+// shifts identity
+
+(a << 0) == a;
+(a >> 0) == a;
+
+%% program
+skip;

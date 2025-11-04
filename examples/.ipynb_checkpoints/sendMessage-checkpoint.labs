@@ -1,0 +1,55 @@
+%% declarations
+
+struct message { // field names taken from implementation
+    toCore: uint32, // receiver core
+    fromCore: uint32, // sender core
+    opcode: uint32, // target system call on the receiver core
+    result: array[uint32], // return from the opcode
+    params: array[uint32] // parameters for the opcode
+};
+
+struct messageQ {
+    messages: array[message],
+    fill: uint32,
+    empty: uint32
+};
+
+const msgQSize: uint32;
+
+msg := new message; // the message we want to send. we assume that the fields of the message are already set.
+
+msgQ := new messageQ; // the receiver's message queue (initialised in the init section)
+atomicity: bool;
+
+function isFull: messageQ -> bool;
+function notifyCore: uint32 -> bool;
+function enqueueMsg: messageQ, message -> array[message];
+function messageInRB: messageQ, message -> bool;
+function getRecvrMsgQ: uint32 -> messageQ;
+function enableAtomicity: uint32 -> bool;
+function disableAtomicity: uint32 -> bool;
+
+%% initialisation
+
+%% preconditions
+
+// we assume that uint32errupts are disabled.
+msgQSize > 0;
+msgQ.fill < msgQSize;
+isFull(msgQ) != true;
+msgQ == getRecvrMsgQ(msg.toCore); // we are talking about the message queue of the intended receiver of this message
+atomicity == enableAtomicity(msg.toCore);
+
+%% postconditions
+
+msgQ == getRecvrMsgQ(msg.toCore);
+messageInRB(msgQ, msg) == true;
+msgQ.fill < msgQSize;
+
+%% program
+
+msgQ.messages := enqueueMsg(msgQ, msg);
+assert(messageInRB(msgQ, msg) == true);
+msgQ.fill := (msgQ.fill + 1) % msgQSize;
+assert(notifyCore(msg.toCore) == true);
+atomicity := disableAtomicity(msg.toCore);

@@ -1,0 +1,18 @@
+%% declarations
+a: uint32;
+b: uint32;
+t: uint32;
+maskKeepLow: uint32;
+
+%% initialisation
+
+%% preconditions
+
+%% postconditions
+
+t == (a & maskKeepLow);
+
+%% program
+
+t := (a << n) >> n;
+maskKeepLow := (4294967295 >> n);

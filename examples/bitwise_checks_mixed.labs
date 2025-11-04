@@ -1,0 +1,30 @@
+%% declarations
+x: uint8;
+y: uint32;
+
+%% initialisation
+
+%% preconditions
+
+%% postconditions
+
+// --- uint8 checks ---
+// (x & 0) == 0;      // 0 is a 32-bit literal
+//(x & 255) == x;    // This should fail (255 is uint32)
+(x | x) == x;
+//(x ^ x) == 0;      // 0 is a 32-bit literal
+//(x | ~x) == 255;   // This should also fail (255 is uint32)
+
+// --- uint32 checks ---
+//(y & 0) == 0;
+//(y | y) == y;
+//(y ^ y) == 0;
+(y | ~y) == 4294967295; // 0xFFFFFFFF
+//~(~y) == y;
+
+// --- shift checks ---
+//(x << 0) == x;     // This should fail (0 is uint32)
+//(y >> 0) == y;     // This should fail (0 is uint32)
+
+%% program
+skip;
