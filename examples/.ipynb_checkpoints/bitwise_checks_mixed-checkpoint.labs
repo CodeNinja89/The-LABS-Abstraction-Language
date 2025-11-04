@@ -9,9 +9,9 @@ y: uint32;
 %% postconditions
 
 // --- uint8 checks ---
-// (x & 0) == 0;      // 0 is a 32-bit literal
-//(x & 255) == x;    // This should fail (255 is uint32)
-(x | x) == x;
+(x & 0u8) == 0u8;      // 0 is a 32-bit literal
+(x & 255u8) == x;    // This should fail (255 is uint32)
+//(x | x) == x;
 //(x ^ x) == 0;      // 0 is a 32-bit literal
 //(x | ~x) == 255;   // This should also fail (255 is uint32)
 

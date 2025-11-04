@@ -1,28 +1,28 @@
 %% declarations
 
-n: uint32;
-sum: uint32;
-num: uint32;
+n: uint16;
+sum: uint16;
+num: uint16;
 
 %% initialisation
 
-n := 10;
-sum := 0;
+n := 100u16;
+sum := 0u16;
 num := n;
 
 %% preconditions
-n == 10;
+n == 100u16;
 
 %% postconditions
-sum == 55;
+sum == 5050u16;
 
 %% program
 
-while (num > 0)
-    invariant (sum == (n * (n + 1) / 2) - 
-                (num * (num + 1) / 2) && num >= 0) // invariant is not optional.
+while (num > 0u16)
+    invariant (sum == (n * (n + 1u16) / 2u16) - 
+                (num * (num + 1u16) / 2u16) && num >= 0u16) // invariant is not optional.
     measure num
 {
     sum := sum + num;
-    num := num - 1;
+    num := num - 1u16;
 }

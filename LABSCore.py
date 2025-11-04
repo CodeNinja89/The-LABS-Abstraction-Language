@@ -38,8 +38,18 @@ def dump_varStore():
 
 def term_enc(e):
     match e:
-        case Const(value):
-            return z3.BitVecVal(value, 32)
+        case Const(value_tuple):
+            # --- NEW CODE ---
+            val, suffix = value_tuple
+            if suffix == "u8":
+                return z3.BitVecVal(val, 8)
+            elif suffix == "u16":
+                return z3.BitVecVal(val, 16)
+            elif suffix == "u64":
+                return z3.BitVecVal(val, 64)
+            else:
+                # Default (u32 or unknown)
+                return z3.BitVecVal(val, 32)
         case Var(name):
             base_name = name.split('_')[0]
             sort = parser.__symbol_table__.get(base_name)
@@ -184,8 +194,14 @@ def eval_measure_if_possible(measure, assumptions):
     s = z3.Solver()
     s.add(assumptions)
     s.push()
-    x = z3.BitVec("__measure__", 32)
-    s.add(x == term_enc(measure))
+    # 1. Encode the measure *first* to find its real sort
+    encoded_measure = term_enc(measure)
+    measure_sort = encoded_measure.sort()
+    
+    x = z3.BitVec("__measure__", measure_sort.size())
+    
+    # 4. Now the comparison is between two identical sorts
+    s.add(x == encoded_measure)
     if s.check() == z3.sat:
         m = s.model()
         try:
@@ -223,15 +239,6 @@ def SP(alpha: Prog, P: BoolRef, max_depth=1):
         case Skip():
             # The postcondition of the previous expression is propagated
             return P
-        #case Asgn(left, right):
-         #   next_var = nextVar(left)
-          #  right_sub = substitute(term_enc(right), [(term_enc(left), term_enc(next_var))])
-           # P_sub = substitute(P, [(term_enc(left), term_enc(next_var))])
-            #return And(term_enc(left) == right_sub, P_sub)
-            
-        # [File: LABSCore.py]
-# ... inside the SP function ...
-
         case Asgn(left, right):
             # 1. Get info about the variable
             base_name = left.name.split('_')[0]

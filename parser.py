@@ -29,8 +29,12 @@ def resolve_sort(t):
         # return BitVecSort(32)
     if t == "uint8":
         return BitVecSort(8)
+    if t == "uint16":
+        return BitVecSort(16)
     if t == "uint32":
         return BitVecSort(32)
+    if t == "uint64":
+        return BitVecSort(64)
     if t == "bool":
         return BoolSort()
     if t.startswith("array[") and t.endswith("]"):
@@ -38,7 +42,7 @@ def resolve_sort(t):
         return ArraySort(BitVecSort(32), resolve_sort(val_type))
     if t in __z3_structs__:
         return __z3_structs__[t]
-    raise TypeError(f"Unknown type '{t}'. Allowed: 'uint32', 'bool', 'array[T]', or a declared struct name.")
+    raise TypeError(f"Unknown type '{t}'. Allowed: 'uint8 | uint16 | uint32 | uint64', 'bool', 'array[T]', or a declared struct name.")
 
 def create_z3_sort(struct: StructDef):
     sort = Datatype(struct.name)
@@ -97,22 +101,6 @@ class AstTransformer(Transformer):
     def program_section(self, *items):
         return list(items)
 
-    '''def new_assignment(self, lvalue, typename):
-        struct_name = typename.value
-        var_name = lvalue.name
-    
-        __symbol_table__[var_name] = struct_name
-    
-        if struct_name in __z3_structs__:
-            z3_sort = __z3_structs__[struct_name]
-    
-            for i in range(z3_sort.constructor(0).arity()):
-                accessor = z3_sort.accessor(0, i)
-                field_name = accessor.name()
-                qualified_name = f"{var_name}.{field_name}"
-                __symbol_table__[qualified_name] = resolve_sort(accessor.range())
-    
-        return NewAssignment(lvalue, struct_name)'''
     def new_assignment(self, lvalue, typename):
         struct_name = typename.value
         var_name = lvalue.name
@@ -166,7 +154,24 @@ class AstTransformer(Transformer):
             return Var(x.value)
         return x  # Already a Var or something else
         
-    def number(self, x): return Const(int(x.value))
+    # def number(self, x): return Const(int(x.value))
+    def number(self, *args):
+        # This will receive either (value,) or (value, suffix)
+        
+        # 1. Unpack the arguments
+        value_token = args[0]
+        suffix_token = args[1] if len(args) > 1 else None
+
+        # 2. Get the integer value
+        val = int(value_token.value)
+
+        # 3. Determine the suffix string
+        suffix_str = "u32"  # Default to u32
+        if suffix_token:
+            suffix_str = suffix_token.value  # e.g., "u8"
+            
+        # 4. Return the tuple that LABSCore.py expects
+        return Const((val, suffix_str))
 
     def sum(self, a, b): return Sum(a, b)
     def difference(self, a, b): return Difference(a, b)
@@ -276,8 +281,10 @@ class AstTransformer(Transformer):
     def existsf(self, var_tok, f):
         return ExistsF(var_tok.value, f)
 
-    def uint32_type(self): return BitVecSort(32)
     def uint8_type(self): return BitVecSort(8)
+    def uint16_type(self): return BitVecSort(16)
+    def uint32_type(self): return BitVecSort(32)
+    def uint64_type(self): return BitVecSort(64)
     def bool_type(self): return BoolSort()
     def array_type(self, value_type):
         return f"array[{value_type}]"
