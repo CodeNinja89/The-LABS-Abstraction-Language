@@ -1,0 +1,24 @@
+// uint32_t rand32(){ // random number in the range 0 ... 0xFFFFFFFF
+// 	uint32_t low  = rand16();
+// 	uint32_t high = rand16();	
+// 	return (high << 16) + low;
+// }
+
+%% declarations
+
+low: uint16;
+high: uint16;
+result: uint32;
+
+%% initialisation
+
+%% preconditions
+
+result == (high << 16u16) + low;
+
+%% postconditions
+
+(result | ~result) == 4294967295;
+
+%% program
+skip;

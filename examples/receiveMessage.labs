@@ -32,7 +32,7 @@ const coreId: uint32; // coreId is an input to the receiver. We treat it as a co
 %% preconditions
 
 msgQSize > 0;
-msgQ.fil >= 0;
+msgQ.fil == 0;
 msgQ.fill < msgQSize;
 msgQ.empty >= 0;
 msgQ.empty < msgQ.size;

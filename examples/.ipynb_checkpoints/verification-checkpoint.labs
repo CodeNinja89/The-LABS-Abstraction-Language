@@ -27,7 +27,7 @@ failed: bool;
 %% preconditions
 
 A == 31541; // 0x7b35
-MAGIC ==  4011867933u32; // 0xEF203F1D
+MAGIC ==  4011867933; // 0xEF203F1D
 (MAGIC * A) == 1; // MAGIC is the multiplicative inverse of A
 
 // Bx, By, Bz range. Use Z3's Unsigned < (BVULT)
