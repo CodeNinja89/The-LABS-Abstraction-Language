@@ -28,6 +28,7 @@ from contextlib import *
 from labsAst import *
 # from parser import __symbol_table__, __function_sigs__, __z3_structs__, __constants__, dump_symTab, resolve_sort
 import parser
+import copy
 
 bit_width = 64
 __variableStore__ = {}
@@ -298,21 +299,83 @@ def SP(alpha: Prog, P: BoolRef, max_depth=1):
             return z3.And(fmla_enc(Q), P)
         
         case Choice(condition, alpha, beta):
+            global __variableStore__
             cond = fmla_enc(condition)
             P1 = z3.simplify(z3.And(P, cond))
             P2 = z3.simplify(z3.And(P, z3.Not(cond)))
-        
+
+            P1_sat = __is_satisfiable__(P1)
+            P2_sat = __is_satisfiable__(P2)
+
+            # --- 1. Save "before" state ---
+            state_before = copy.deepcopy(__variableStore__)
+
+            # --- 2. Run 'alpha' branch ---
             post_alpha = SP(alpha, P1, max_depth)
+            state_alpha = copy.deepcopy(__variableStore__)
+
+            # --- 3. Restore and run 'beta' branch ---
+            
+            __variableStore__ = state_before
             post_beta = SP(beta, P2, max_depth)
-        
-            if __is_satisfiable__(P1) and __is_satisfiable__(P2):
-                return z3.Or(post_alpha, post_beta) # both feasible
-            elif __is_satisfiable__(P1):
+            state_beta = copy.deepcopy(__variableStore__)
+
+            # --- 4. Handle pruning (the simple cases) ---
+            if not P1_sat and not P2_sat:
+                __variableStore__ = state_before # Restore state, as neither path ran
+                return z3.BoolVal(False)
+            
+            if P1_sat and not P2_sat:
+                __variableStore__ = state_alpha # Commit to alpha's state
                 return post_alpha
-            elif __is_satisfiable__(P2):
+            
+            if not P1_sat and P2_sat:
+                __variableStore__ = state_beta # Commit to beta's state
                 return post_beta
-            else:
-                return z3.BoolVal(False)  # Both infeasible, dead code
+
+            # --- 5. Merge (The "Phi Function" step) ---
+            # Both paths are feasible. We must merge their states.
+            
+            final_post = z3.Or(post_alpha, post_beta)
+            final_state = copy.deepcopy(state_before)
+            phi_nodes = []
+
+            # Find all variables modified in *either* branch
+            all_modified_vars = set(state_alpha.keys()) | set(state_beta.keys())
+
+            for var_name in all_modified_vars:
+                # Get the version from all three states
+                ver_before = state_before.get(var_name, -1)
+                ver_alpha = state_alpha.get(var_name, ver_before)
+                ver_beta = state_beta.get(var_name, ver_before)
+
+                if ver_alpha == ver_beta:
+                    # Both branches agree (or one didn't touch it)
+                    final_state[var_name] = ver_alpha
+                    continue
+
+                # --- State Conflict: Build a Phi Node ---
+                
+                # 1. Get the terms for the alpha and beta versions
+                sort = parser.__symbol_table__.get(var_name)
+                term_alpha = z3.Const(f"{var_name}_{ver_alpha}", sort)
+                term_beta = z3.Const(f"{var_name}_{ver_beta}", sort)
+                
+                # 2. Create a *new* merged version
+                new_ver = max(ver_alpha, ver_beta) + 1
+                new_term = z3.Const(f"{var_name}_{new_ver}", sort)
+                
+                # 3. Create the Phi formula: new_var = If(cond, var_alpha, var_beta)
+                #    We use the original 'cond', not P1 or P2!
+                phi = (new_term == z3.If(cond, term_alpha, term_beta))
+                phi_nodes.append(phi)
+                
+                # 4. Update the final state store for subsequent statements
+                final_state[var_name] = new_ver
+
+            # 6. Commit the final state and return the merged formula
+            __variableStore__ = final_state
+            return z3.And(final_post, *phi_nodes)
 
         case While(condition, body, invariant, measure):
             cond = fmla_enc(condition)
