@@ -1,0 +1,52 @@
+%% declarations
+
+// --- Decision Variables (What we want to solve for) ---
+Torque_Left_Rear: uint32;
+Torque_Right_Rear: uint32;
+
+// --- Constants & Inputs (The "givens" for this scenario) ---
+const Total_Torque_Request: uint32;
+const Load_Rear_Axle: uint32;       // e.g., in Newtons
+const Friction_Coeff_Left: uint32;  // Scaled by 100 (e.g., 70 = 0.7)
+const Friction_Coeff_Right: uint32; // Scaled by 100
+const Max_Torque_Per_Wheel: uint32; // Physical limit of the half-shaft
+
+%% initialisation
+// (empty)
+
+%% preconditions
+
+// --- System Constraints (The Equalities & Inequalities) ---
+
+// 1. The total torque applied must equal the driver's request
+Torque_Left_Rear + Torque_Right_Rear == Total_Torque_Request;
+
+// 2. We can't apply negative torque
+Torque_Left_Rear >= 0u32;
+Torque_Right_Rear >= 0u32;
+
+// 3. We can't exceed the physical limits of the hardware
+Torque_Left_Rear <= Max_Torque_Per_Wheel;
+Torque_Right_Rear <= Max_Torque_Per_Wheel;
+
+// 4. We can't exceed the traction limit (simplified)
+// (Torque must be less than Load * Friction)
+// We divide by 100 to account for our scaled friction coefficient
+Torque_Left_Rear <= (Load_Rear_Axle * Friction_Coeff_Left) / 100u32;
+Torque_Right_Rear <= (Load_Rear_Axle * Friction_Coeff_Right) / 100u32;
+
+// --- A Specific Scenario to Solve ---
+// Let's find a solution for a specific, difficult case:
+// The truck is turning, and the inside (left) wheel has less grip.
+Total_Torque_Request == 500u32; // Requesting 500 units of torque
+Load_Rear_Axle == 10000u32;     // 10000 Newtons on the axle
+Max_Torque_Per_Wheel == 400u32; // Each wheel can only handle 400
+Friction_Coeff_Left == 30u32;   // 0.3 (wet patch)
+Friction_Coeff_Right == 70u32;  // 0.7 (dry pavement)
+
+
+%% postconditions
+// (empty)
+
+%% program
+skip;

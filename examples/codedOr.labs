@@ -1,0 +1,60 @@
+%% declarations
+t2: uint32;
+t5: uint32;
+t1: uint32;
+negT1: uint32; // LABS doesn't support snake_case. camelCase or PascalCase must be used
+D8: uint32;
+const A: uint32;
+const MAGIC: uint32;
+Bx: uint32;
+By: uint32;
+Bz: uint32;
+D: uint32;
+SigCorr: uint32;
+x: uint32;
+y: uint32;
+xc: uint32;
+yc: uint32;
+zc: uint32;
+z: uint32;
+
+%% initialisation
+// No init, we'll use preconditions
+
+%% preconditions
+A == 31541; // 0x7b35
+MAGIC ==  4011867933; // 0xEF203F1D
+(MAGIC * A) == 1; // MAGIC is the multiplicative inverse of A
+
+x == 0 || x == 1;
+y == 0 || y == 1;
+
+Bx > 0;
+Bx < A; // This check is now also uint32
+
+By > 0;
+By < A;
+
+Bz > 0;
+Bz < A;
+
+D > 0;
+
+xc == (A * x + Bx + D);
+yc == (A * y + By + D);
+
+%% postconditions
+
+(z % A) == 0;
+(z / A) == (x + y - (x * y));
+
+%% program
+
+D8 := D ^ (0u32 - 256); // -2^8 in unsigned 32-bit
+SigCorr := (2 * A) + Bx + By + (1u32 << 16u32) - 2 * Bz - (2 * D8);
+t1 := xc + yc;
+negT1 := (0u32 - t1);
+t2 := negT1 + SigCorr;
+t5 := (t2 & 1) * (A / 2);
+zc := (0u32 - (t2 / 2)) + t5 - D8 + A + (1u32 << 15u32);
+z := zc - Bz - D;

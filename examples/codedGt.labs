@@ -1,0 +1,102 @@
+%% declarations
+
+t1: uint32;
+t2: uint32;
+t3: uint32;
+t4: uint32;
+t5: uint32;
+tk: uint32;
+t6: uint32;
+const A: uint32;
+const MAGIC: uint32;
+Bx: uint32;
+By: uint32;
+Bz: uint32;
+BDiff: uint32;
+Bt: uint32;
+D: uint32;
+D8: uint32;
+Dmin: uint32;
+Diffc: uint32;
+x: uint32;
+y: uint32;
+xc: uint32;
+yc: uint32;
+Avzc: uint32;
+zc: uint32;
+z: uint32;
+comparison: uint32;
+
+%% initialisation
+
+%% preconditions
+
+// these preconditions are taken from the original code shared by Max Walter.
+
+A == 31541; // 0x7b35
+MAGIC ==  4011867933; // 0xEF203F1D
+(MAGIC * A) == 1; // MAGIC is the multiplicative inverse of A
+
+// for now, let's restrict the values of x and y.
+// this is so because of the LABS backend.
+// the engine is recursive to we always hit 
+// the recursion depth error. This is bad design. TODO: OO Design Patterns!
+
+x > 0;
+x < 256;
+y > 0;
+y < 256;
+
+Bx > 0;
+Bx < A;
+
+By > 0;
+By < A;
+
+Bz > 0;
+Bz < A;
+
+BDiff > 0;
+BDiff < A;
+
+Bt > 0;
+Bt < A;
+
+D > 0;
+
+xc == (A * x + Bx + D);
+yc == (A * y + By + D);
+
+x > y => comparison == 1;
+x <= y => comparison == 0;
+
+%% postconditions
+
+z == comparison;
+
+%% program
+
+t1 := yc + D;
+t2 := (0 - xc) + Bx - By + BDiff;
+Diffc := t1 + t2;
+D8 := D ^ (0u32 - 256); // -2^8 in unsigned 32-bit
+Dmin := D + D8 + 256u32; // if no type hint is provided for constant literals, it's uint32
+t3 := Diffc + D8 - BDiff + (2 * Bt);
+
+t4 := (t3 - 31540u32 * (t3 & 1)) >> 1;
+assert(t4 >= 1073741824);
+if(t4 >= 1073741824) {
+    tk := 4096655488 - Bt + (2067070976 * Bz);
+}
+else {
+    tk := 128 - Bt + (2067070976 * Bz);
+}
+
+t5 := t4 + tk;
+t6 := t5 + (2067070976 * Dmin);
+Avzc := t6 - (Dmin / 2); // assuming integer division
+zc := ((MAGIC * Avzc) >> 16) - D8 - 256u32;
+
+// decode
+z := zc - Bz - D;
+z := z / A;

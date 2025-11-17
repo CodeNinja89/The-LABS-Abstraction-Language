@@ -1,0 +1,32 @@
+%% declarations
+
+x: uint32;
+y: uint32;
+comparison: uint32;
+failed: bool;
+
+%% initialisation
+// No init, we'll use preconditions
+
+%% preconditions
+
+x >= 0;
+x < 65536;
+y >= 0;
+y < 65536;
+failed == false;
+comparison == 0;
+
+%% postconditions
+
+x > y => comparison == 1;
+// x > y => (failed == false && comparison == 1);
+
+%% program
+
+if(x > y) {
+    comparison := 1;
+}
+else {
+    failed := true;
+}
