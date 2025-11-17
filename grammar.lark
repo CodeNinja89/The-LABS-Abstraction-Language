@@ -44,6 +44,9 @@ while_loop: "while" "(" formula ")" ("invariant" formula)+ ("measure" expr)? blo
 
 lvalue: NAME ("." NAME)*
 
+// "lower" level rules (like atom) are referenced by "higher" level rules (like term), 
+// creating a structure where the lower rules bind more tightly.
+
 ?formula: implication
 ?implication: disjunction | disjunction "=>" implication -> impliesf
 ?disjunction: conjunction | conjunction "||" disjunction -> orf
@@ -81,14 +84,11 @@ add: add "+" term -> sum
      | add "-" term -> difference
      | term
 
-?term: term "*" factor -> product
-     | term "/" factor -> division
-     | term "%" factor -> mod
-     | factor
+?term: term "*" atom -> product
+     | term "/" atom -> division
+     | term "%" atom -> mod
+     | atom
 
-?factor: power // The power operator has been removed
-
-?power: atom
 ?atom: number
      | "true"        -> true_const
      | "false"       -> false_const
